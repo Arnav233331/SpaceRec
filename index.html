@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpaceRec Web - Recorder, Ads & Store</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:linear-gradient(120deg,#0a0a0a,#111); color:#fff; min-height:100vh; margin:0; padding:20px; display:flex; flex-direction:column; align-items:center;}
+header { width:100%; text-align:center; font-size:32px; font-weight:bold; color:#00ffea; border-bottom:2px solid #00ffea; padding:20px 0; margin-bottom:30px;}
+.betaLabel { background:#ff0055; color:#fff; font-size:14px; font-weight:bold; padding:3px 8px; border-radius:5px; margin-left:10px; vertical-align:middle; }
+.container { display:flex; flex-wrap: wrap; justify-content:center; gap:20px; width:100%; max-width:1200px;}
+.section { background:#1b1b1b; border:2px solid #00ffea; border-radius:15px; padding:20px; flex:1 1 300px; text-align:center; min-width:280px; transition:transform 0.3s, box-shadow 0.3s;}
+.section:hover { transform:scale(1.02); box-shadow:0 0 20px #00ffea80; }
+video { width:100%; border-radius:10px; margin-bottom:15px; }
+button { background:#00ffea; color:#000; border:none; padding:12px 25px; margin:5px; font-size:16px; font-weight:bold; border-radius:10px; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; display:inline-flex; align-items:center; gap:8px; }
+button:hover { transform:scale(1.05); box-shadow:0 0 10px #00ffea; }
+input, select { padding:8px 12px; border-radius:5px; border:none; width:80%; margin-bottom:10px; }
+.history { width:100%; max-width:800px; margin-top:30px; background:#1b1b1b; border:2px solid #00ffea; border-radius:15px; padding:15px; overflow:auto; max-height:300px;}
+.history h3 { color:#00ffea; margin-bottom:10px; }
+.history ul { list-style:none; padding-left:0; margin:0;}
+.history li { padding:5px 0; border-bottom:1px solid #00ffea50; display:flex; justify-content:space-between; align-items:center; }
+.history li input[type="checkbox"] { margin-right:10px; }
+#adContainer, #storeContainer, #settingsContainer { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); justify-content:center; align-items:center; flex-direction:column; z-index:999; padding:20px; text-align:center; overflow:auto; }
+#adContainer img { width:30%; border:2px solid #00ffea; border-radius:15px; margin-bottom:15px; }
+#adContainer p, #storeContainer p, #settingsContainer p { font-size:18px; color:#00ffea; margin-bottom:5px; }
+#adContainer ul, #storeContainer ul { list-style:disc inside; text-align:left; margin:10px auto; width:60%; }
+.progressBar { width:60%; height:20px; background:#111; border:2px solid #00ffea; border-radius:10px; margin:10px auto; }
+.progressFill { height:100%; background:#00ffea; width:0%; border-radius:8px; }
+#creditsStatus, #adStatus, #premiumBadge { margin-top:10px; }
+#premiumBadge { background:gold; color:#000; font-weight:bold; padding:3px 8px; border-radius:5px; display:inline-block; }
+#discordBtn { margin-top:20px; background:#7289da; color:#fff; }
+</style>
+</head>
+<body>
+
+<header>SpaceRec Web - Recorder, Ads & Store <span class="betaLabel">BETA</span></header>
+
+<div class="container">
+  <div class="section">
+    <h3>Account</h3>
+    <input type="text" id="username" placeholder="Enter Username">
+    <input type="password" id="password" placeholder="Enter Password">
+    <input type="password" id="confirmPassword" placeholder="Confirm Password">
+    <button id="loginBtn"><i class="fa fa-user"></i> Login / Register</button>
+    <p id="userStatus">Not logged in</p>
+    <p id="creditsStatus"></p>
+    <span id="premiumBadge" style="display:none;">Premium</span>
+    <button id="watchAdBtn"><i class="fa fa-play-circle"></i> Watch ChatGPT Ad</button>
+    <p id="adStatus"></p>
+    <button id="storeBtn" style="display:none;"><i class="fa fa-store"></i> Open Store</button>
+    <button id="discordBtn" onclick="window.open('https://discord.gg/AXC6Xbf6xY','_blank')"><i class="fa fa-discord"></i> Discord</button>
+  </div>
+
+  <div class="section">
+    <h3>Screen Capture</h3>
+    <video id="preview" autoplay muted></video>
+    <button id="settingsBtn"><i class="fa fa-cog"></i> Recording Settings</button>
+    <div>
+      <button id="startBtn"><i class="fa fa-circle"></i> Start Capture</button>
+      <button id="pauseBtn" disabled><i class="fa fa-pause"></i> Pause</button>
+      <button id="stopBtn" disabled><i class="fa fa-square"></i> Stop Recording</button>
+      <button id="downloadBtn" disabled><i class="fa fa-download"></i> Download Last Capture</button>
+      <button id="downloadZipBtn"><i class="fa fa-file-zipper"></i> Download Selected as ZIP</button>
+      <button id="deleteSelectedBtn"><i class="fa fa-trash"></i> Delete Selected</button>
+    </div>
+  </div>
+</div>
+
+<div class="history">
+  <h3>Capture History</h3>
+  <ul id="historyList"></ul>
+</div>
+
+<!-- Ad overlay -->
+<div id="adContainer">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="ChatGPT Pro">
+  <p>ChatGPT Pro Features</p>
+  <ul>
+    <li>Priority access to GPT servers</li>
+    <li>Faster response times</li>
+    <li>Extended conversation memory</li>
+    <li>Access to advanced AI tools</li>
+    <li>Early access to new features</li>
+  </ul>
+  <div class="progressBar"><div class="progressFill" id="adProgress"></div></div>
+  <p id="adTimer">0:05</p>
+  <button id="claimBtn" style="display:none;"><i class="fa fa-gift"></i> Claim Reward (500 Credits)</button>
+</div>
+
+<!-- Store overlay -->
+<div id="storeContainer">
+  <h2>Store</h2>
+  <p>Buy videos or unlock unlimited access:</p>
+  <h3>Video Packs</h3>
+  <button class="buyPackBtn" data-videos="1" data-cost="200"><i class="fa fa-video"></i> 1 Video = 200 Credits</button>
+  <button class="buyPackBtn" data-videos="5" data-cost="900"><i class="fa fa-video"></i> 5 Videos = 900 Credits</button>
+  <button class="buyPackBtn" data-videos="10" data-cost="1700"><i class="fa fa-video"></i> 10 Videos = 1700 Credits</button>
+  <h3>Subscription Model</h3>
+  <button class="subscribeBtn" data-cost="5000" data-duration="7"><i class="fa fa-calendar-week"></i> Weekly Premium = 5000 Credits (7 days)</button>
+  <button class="subscribeBtn" data-cost="18000" data-duration="30"><i class="fa fa-calendar-days"></i> Monthly Premium = 18000 Credits (30 days)</button>
+  <button id="closeStoreBtn"><i class="fa fa-times-circle"></i> Close Store</button>
+</div>
+
+<!-- Recording settings overlay -->
+<div id="settingsContainer">
+  <h2>Recording Settings</h2>
+  <p>Resolution:</p>
+  <select id="resolutionSelect">
+    <option value="default">Default</option>
+    <option value="720p">1280x720</option>
+    <option value="1080p">1920x1080</option>
+    <option value="4k">3840x2160</option>
+  </select>
+  <p><input type="checkbox" id="audioToggle" checked> Capture Audio</p>
+  <button id="saveSettingsBtn"><i class="fa fa-save"></i> Save</button>
+</div>
+
+<script src="https://stuk.github.io/jszip/dist/jszip.min.js"></script>
+<script>
+let currentUser=null;
+let recordingSettings={resolution:'default', audio:true};
+let mediaRecorder, recordedChunks=[], sessionBlob=null;
+let isRecording=false;
+
+// DOM Elements
+const usernameInput=document.getElementById('username');
+const passwordInput=document.getElementById('password');
+const confirmPasswordInput=document.getElementById('confirmPassword');
+const loginBtn=document.getElementById('loginBtn');
+const userStatus=document.getElementById('userStatus');
+const creditsStatus=document.getElementById('creditsStatus');
+const premiumBadge=document.getElementById('premiumBadge');
+const watchAdBtn=document.getElementById('watchAdBtn');
+const adStatus=document.getElementById('adStatus');
+const adContainer=document.getElementById('adContainer');
+const adTimerDisplay=document.getElementById('adTimer');
+const claimBtn=document.getElementById('claimBtn');
+const adProgress=document.getElementById('adProgress');
+const historyList=document.getElementById('historyList');
+const storeBtn=document.getElementById('storeBtn');
+const storeContainer=document.getElementById('storeContainer');
+const preview=document.getElementById('preview');
+const startBtn=document.getElementById('startBtn');
+const pauseBtn=document.getElementById('pauseBtn');
+const stopBtn=document.getElementById('stopBtn');
+const downloadBtn=document.getElementById('downloadBtn');
+const downloadZipBtn=document.getElementById('downloadZipBtn');
+const deleteSelectedBtn=document.getElementById('deleteSelectedBtn');
+const settingsBtn=document.getElementById('settingsBtn');
+const settingsContainer=document.getElementById('settingsContainer');
+const resolutionSelect=document.getElementById('resolutionSelect');
+const audioToggle=document.getElementById('audioToggle');
+const saveSettingsBtn=document.getElementById('saveSettingsBtn');
+const closeStoreBtn=document.getElementById('closeStoreBtn');
+
+// Initialize user
+function initUser(username,password){
+    let data=localStorage.getItem('space_'+username);
+    if(!data){
+        let credits = (username==='45456767' && password==='22334455') ? 999999 : 500;
+        localStorage.setItem('space_'+username, JSON.stringify({
+            password:password,
+            credits:credits,
+            adDate:"",
+            history:[],
+            store:{videos:0, unlimited:(credits===999999), unlimitedExpire:0}
+        }));
+    }
+    updateUI();
+}
+
+loginBtn.onclick=()=>{
+    const name=usernameInput.value.trim();
+    const pass=passwordInput.value.trim();
+    const confirmPass=confirmPasswordInput.value.trim();
+    if(!name||!pass){ alert("Enter username & password!"); return; }
+    if(!localStorage.getItem('space_'+name) && pass!==confirmPass){ alert("Passwords do not match!"); return; }
+    const data=localStorage.getItem('space_'+name);
+    if(data){ const parsed=JSON.parse(data); if(parsed.password!==pass){ alert("Incorrect password!"); return; } }
+    currentUser=name;
+    initUser(name,pass);
+};
+
+function updateUI(){
+    if(!currentUser) return;
+    let data=JSON.parse(localStorage.getItem('space_'+currentUser));
+    const now=Date.now();
+    if(data.store.unlimited && now>data.store.unlimitedExpire){ data.store.unlimited=false; localStorage.setItem('space_'+currentUser, JSON.stringify(data)); }
+    let availableRecordings = data.store.unlimited ? 'Unlimited' : data.store.videos>0 ? data.store.videos+' video(s)' : '500 credits = 1 recording';
+    creditsStatus.textContent=`Credits: ${data.credits} (${availableRecordings})`;
+    premiumBadge.style.display=(data.store.unlimited)?'inline-block':'none';
+    userStatus.textContent=`Logged in as ${currentUser}`;
+    const today=new Date().toLocaleDateString();
+    if(data.adDate!==today){ watchAdBtn.style.display="inline-block"; adStatus.textContent=""; }
+    else{ watchAdBtn.style.display="none"; adStatus.textContent="Ad already claimed today."; }
+    storeBtn.style.display="inline-block";
+    loadHistory();
+}
+
+function loadHistory(){
+    const checkedIndexes = Array.from(document.querySelectorAll('.historyCheck')).filter(ch=>ch.checked).map(ch=>parseInt(ch.dataset.index));
+    historyList.innerHTML='';
+    const data=JSON.parse(localStorage.getItem('space_'+currentUser));
+    data.history.forEach((item,index)=>{
+        const li=document.createElement('li');
+        li.innerHTML=`<input type="checkbox" class="historyCheck" data-index="${index}"> <span>${item.name} - ${item.date}</span>`;
+        const checkbox=li.querySelector('.historyCheck');
+        if(checkedIndexes.includes(index)) checkbox.checked=true;
+
+        const downloadBtnHistory=document.createElement('button');
+        downloadBtnHistory.innerHTML='<i class="fa fa-download"></i> Download';
+        downloadBtnHistory.style.padding='5px 10px';
+        downloadBtnHistory.style.fontSize='14px';
+        downloadBtnHistory.onclick=()=>{
+            const blob=item.blob instanceof Blob ? item.blob : sessionBlob;
+            if(!blob){ alert("Recording not found!"); return; }
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url; a.download=item.name; a.click(); URL.revokeObjectURL(url);
+        };
+        li.appendChild(downloadBtnHistory);
+        historyList.appendChild(li);
+    });
+}
+
+// Watch ad
+watchAdBtn.onclick=()=>{
+    watchAdBtn.style.display="none"; adContainer.style.display="flex"; claimBtn.style.display="none";
+    let timer=5; adTimerDisplay.textContent=`0:${timer.toString().padStart(2,'0')}`; adProgress.style.width='0%';
+    const interval=setInterval(()=>{
+        timer--; adTimerDisplay.textContent=`0:${timer.toString().padStart(2,'0')}`; adProgress.style.width= `${((5-timer)/5)*100}%`;
+        if(timer<=0){ clearInterval(interval); claimBtn.style.display="inline-block"; }
+    },1000);
+};
+
+claimBtn.onclick=()=>{
+    let data=JSON.parse(localStorage.getItem('space_'+currentUser));
+    data.credits+=500; data.adDate=new Date().toLocaleDateString();
+    localStorage.setItem('space_'+currentUser, JSON.stringify(data));
+    adContainer.style.display="none"; updateUI();
+};
+
+// Store
+storeBtn.onclick=()=>{ storeContainer.style.display="flex"; };
+closeStoreBtn.onclick=()=>{ storeContainer.style.display="none"; };
+document.querySelectorAll('.buyPackBtn').forEach(btn=>btn.onclick=()=>{
+    let videos=parseInt(btn.dataset.videos); let cost=parseInt(btn.dataset.cost);
+    let data=JSON.parse(localStorage.getItem('space_'+currentUser));
+    if(data.credits>=cost){ data.credits-=cost; data.store.videos+=videos; localStorage.setItem('space_'+currentUser, JSON.stringify(data)); updateUI(); alert(`Purchased ${videos} video(s)!`); }
+    else alert('Not enough credits!');
+});
+document.querySelectorAll('.subscribeBtn').forEach(btn=>btn.onclick=()=>{
+    let cost=parseInt(btn.dataset.cost); let duration=parseInt(btn.dataset.duration);
+    let data=JSON.parse(localStorage.getItem('space_'+currentUser));
+    if(data.credits>=cost){ data.credits-=cost; data.store.unlimited=true; data.store.unlimitedExpire=Date.now()+duration*24*60*60*1000; localStorage.setItem('space_'+currentUser, JSON.stringify(data)); updateUI(); alert(`Subscription active for ${duration} days!`); }
+    else alert('Not enough credits!');
+});
+
+// Recording settings
+settingsBtn.onclick=()=>{ settingsContainer.style.display="flex"; resolutionSelect.value=recordingSettings.resolution; audioToggle.checked=recordingSettings.audio; };
+saveSettingsBtn.onclick=()=>{ recordingSettings.resolution=resolutionSelect.value; recordingSettings.audio=audioToggle.checked; settingsContainer.style.display="none"; };
+
+// Recorder
+startBtn.onclick = async () => {
+    if (!currentUser) { alert("Login first!"); return; }
+    if (isRecording) { alert("Recording is already in progress!"); return; }
+    isRecording = true; startBtn.disabled = true; pauseBtn.disabled = false;
+    if (preview.srcObject) { preview.srcObject.getTracks().forEach(track => track.stop()); preview.srcObject = null; }
+    recordedChunks = []; sessionBlob = null;
+    let data = JSON.parse(localStorage.getItem('space_' + currentUser));
+    const canRecord = data.store.unlimited || data.store.videos > 0 || data.credits >= 500;
+    if (!canRecord) { alert("Not enough credits!"); isRecording=false; startBtn.disabled=false; pauseBtn.disabled=true; return; }
+    try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video:true, audio:recordingSettings.audio });
+        preview.srcObject = stream;
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            sessionBlob = new Blob(recordedChunks, { type: 'video/webm' });
+            if (!data.store.unlimited) { if (data.store.videos>0) data.store.videos--; else data.credits-=500; }
+            data.history.push({ name:`Recording_${Date.now()}.webm`, date:new Date().toLocaleString(), blob: sessionBlob });
+            localStorage.setItem('space_' + currentUser, JSON.stringify(data));
+            downloadBtn.disabled = false; isRecording = false; pauseBtn.disabled = true; pauseBtn.innerHTML='<i class="fa fa-pause"></i> Pause';
+            updateUI();
+        };
+        mediaRecorder.start(); stopBtn.disabled = false;
+    } catch(err){ alert("Error: "+err); isRecording=false; startBtn.disabled=false; pauseBtn.disabled=true; }
+};
+pauseBtn.onclick = () => { if (!mediaRecorder) return; if (mediaRecorder.state==="recording") { mediaRecorder.pause(); pauseBtn.innerHTML='<i class="fa fa-play"></i> Resume'; } else { mediaRecorder.resume(); pauseBtn.innerHTML='<i class="fa fa-pause"></i> Pause'; } };
+stopBtn.onclick = () => { if(mediaRecorder && mediaRecorder.state!=="inactive") mediaRecorder.stop(); startBtn.disabled=false; stopBtn.disabled=true; pauseBtn.disabled=true; if(preview.srcObject){ preview.srcObject.getTracks().forEach(t=>t.stop()); preview.srcObject=null; } };
+downloadBtn.onclick = () => { if(!sessionBlob) return; const url=URL.createObjectURL(sessionBlob); const a=document.createElement('a'); a.href=url; a.download=`Recording_${Date.now()}.webm`; a.click(); URL.revokeObjectURL(url); };
+
+// Multi-select delete
+deleteSelectedBtn.onclick = ()=>{
+    let data=JSON.parse(localStorage.getItem('space_'+currentUser));
+    const checkedIndexes = Array.from(document.querySelectorAll('.historyCheck')).filter(ch=>ch.checked).map(ch=>parseInt(ch.dataset.index));
+    data.history = data.history.filter((_,i)=>!checkedIndexes.includes(i));
+    localStorage.setItem('space_'+currentUser, JSON.stringify(data));
+    updateUI();
+};
+
+// Multi-select ZIP download
+downloadZipBtn.onclick = ()=>{
+    const checkedIndexes = Array.from(document.querySelectorAll('.historyCheck')).filter(ch=>ch.checked).map(ch=>parseInt(ch.dataset.index));
+    if(checkedIndexes.length===0){ alert("Select recordings first!"); return; }
+    const data=JSON.parse(localStorage.getItem('space_'+currentUser));
+    const zip = new JSZip();
+    checkedIndexes.forEach(i=>{
+        const blob = data.history[i].blob;
+        zip.file(data.history[i].name, blob);
+    });
+    zip.generateAsync({type:"blob"}).then(function(content){
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(content);
+        a.download="Recordings.zip";
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+};
+
+// Live UI updates
+setInterval(()=>{ if(currentUser) updateUI(); },1000);
+</script>
+
+</body>
+</html>
+
